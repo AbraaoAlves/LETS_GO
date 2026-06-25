@@ -10,7 +10,15 @@ Feel free to give me your thoughts.
 
 A1. Is "measurement" one concept, or is it hiding several (raw reading vs. interpreted result vs. free-text observation)?
 
+> [IMPACT]    : whether the model is one polymorphic Measurement or split entitie.
+
+> [ASSUMPTION]: one `measurement` is entity carrying a typed value, classified by a first-class `measurement_type` and a `value JSONB`. Adding a new measurement type  require no schema migration. This keeps the door open for new techniques.
+
 A2. When a sample is "divided into smaller vials," is that aliquoting — i.e., do you need parent→child sample lineage?
+
+> [IMPACT]    : whether Sample needs a self-referencing genealogy and whether quantity is tracked
+
+> [ASSUMPTION]: support an optional `parent_sample_id` self-reference so lineage is representable.
 
 
 ## B. Defining bound of Project <-> Experiments <-> Measurement:
@@ -38,6 +46,9 @@ C3. Is "follow-up" really just an experiment-to-experiment edge, or the shadow o
 D1. Are these samples physical resources that get consumed, altered, or depleted during an experiment?
 
 > If a sample is a chemical compound and an experiment uses 50ml of it, the system needs to track 'quantity' and 'state changes'. If it's a soil sample that remains intact after a visual scan, it's treated differently. If it's a blood sample that gets divided into smaller vials, we are dealing with a parent-child genealogy of samples.
+
+
+
 
 ## E. The Semantics of "Measurements"
 
