@@ -2,4 +2,4 @@
 
 ## Project Summary
 
-The system is a Laboratory Experiment Tracking System (LETS) to manage laboratory governance and operations.
+The system is a Laboratory Experiment Tracking System (LETS) to manage laboratory governance and operations. Created to solve this challange ([PROBLEM.md](./PROBLEM.md)) 
