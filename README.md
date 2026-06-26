@@ -33,8 +33,17 @@ Below is the rationale behind this choice and the trade-offs considered.
 
 #### Advantages:
 
+- **Future-Proof Extensibility**: The lab can introduce a complex, nested measurement type tomorrow (e.g., a genomic sequence slice or an array of multidimensional sensor readings) without requiring a single database migration.  
+- **Performance**: JSONB stores data in a decomposed binary format. This allows us to inject GIN (Generalized Inverted Index) indexes directly on JSON keys, ensuring that queries targeting specific internal properties remain fast.
+- **Operational Simplicity**: Avoids the complexity of managing multiple joined tables or running risky structural schema updates on growing production databases.
+
+
 #### Accepted Trade-offs & Risks : 
+
+- Loss of Strict DB-Level Type Constraint: PostgreSQL cannot natively enforce that a numeric measurement always contains a valid float directly through column definitions.
+
+- Application-Level Responsibility: The burden of structural validation shifts from the database to the application layer. The backend application will be responsible for validating input data against specific schemas (e.g., using Zod/TypeScript or JSON Schema validation) before committing the write.
 
 ##### Mitigation Strategies:
 
-
+we can enforce partial schema constraints using database-level CHECK constraints if strict boundaries are needed for core types, such as ensuring a type field exists in the JSON payload
