@@ -65,7 +65,13 @@ B4. When a measurement "references the sample it was taken from," must that samp
 
 ## C. Follow-up experiments
 
-C1. Can a follow-up experiment belong to a *different* project than the one it follows?** (Replication often happens under a new grant.)
+C1. Can a follow-up experiment belong to a *different* project than the one it follows? (Replication often happens under a new grant.)
+
+> [IMPACT]    : Whether `predecessor_experiment_id` needs a same-project guard trigger on top of the FK established in [B2](#b-defining-bound-of-project---experiments---measurement).
+
+> [ASSUMPTION]: Cross-project follow-ups are allowed. `project_id` is an administrative and funding boundary; scientific lineage (`predecessor_experiment_id`) is orthogonal — replication under a new grant, a spin-off collaboration, or a follow-on study are all legitimate predecessor chains that cross project lines. The problem statement never asserts same-project restriction, so no trigger is warranted.
+
+> [ENFORCEMENT]: The `predecessor_experiment_id FK → experiments.id` from [B2](#b-defining-bound-of-project---experiments---measurement) is sufficient — it guarantees the predecessor exists. No cross-table same-project trigger, per [A0](#a-language-and-core-concepts).
 
 C2. Is the follow-up relationship a strict linear chain (A→B→C), or can one experiment spawn several parallel follow-ups? Are cycles ever valid?
 
