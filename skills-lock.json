@@ -1,11 +1,23 @@
 {
   "version": 1,
   "skills": {
+    "design-postgres-tables": {
+      "source": "timescale/pg-aiguide",
+      "sourceType": "github",
+      "skillPath": "skills/design-postgres-tables/SKILL.md",
+      "computedHash": "6b44a27f3c448af8da01562da39f32846222f5ad53ee61a7d12f520c83df56b1"
+    },
     "postgres": {
       "source": "timescale/pg-aiguide",
       "sourceType": "github",
       "skillPath": "skills/postgres/SKILL.md",
       "computedHash": "a6bf1a45932f4a8cdbb7479d18e6d3cf35f015ed0cd7688e36e151e1a6b32dd9"
+    },
+    "postgres-database-migration": {
+      "source": "timescale/pg-aiguide",
+      "sourceType": "github",
+      "skillPath": "skills/postgres-database-migration/SKILL.md",
+      "computedHash": "ce0d7e2008ee23d3476753bdb744125925c8412cc4e0c2206b2d3ba3014711da"
     }
   }
 }
