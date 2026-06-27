@@ -96,6 +96,12 @@ D1. Are these samples physical resources that get consumed, altered, or depleted
 
 > If a sample is a chemical compound and an experiment uses 50ml of it, the system needs to track 'quantity' and 'state changes'. If it's a soil sample that remains intact after a visual scan, it's treated differently. If it's a blood sample that gets divided into smaller vials, we are dealing with a parent-child genealogy of samples.
 
+> [IMPACT]    : Whether `sample` needs a `quantity` column, a `state` enum (`intact | consumed | degraded | depleted`), and depletion-tracking logic, or whether it is a reference entity with no live inventory semantics.
+
+> [ASSUMPTION]: Samples are immutable reference entities — named, typed, optionally linked by parent lineage ([A2](#a-language-and-core-concepts)), but not tracked for quantity or state changes. The problem statement describes samples as things experiments reference; it never names inventory management, depletion tracking, or state transitions. Under [A0](#a-language-and-core-concepts) (CSV ingestion of historical lab logs), the import records what samples were used, not how much was consumed or what physical state they were in at each step. A `type` or `description` field on `sample` is sufficient to capture what kind of physical entity it is. If a future workflow confirms that consumed-without-measurement samples are a real traceability gap — the risk named in [B4](#b-defining-bound-of-project---experiments---measurement) — the `experiment_samples` associative table from the B4 mitigation path is the right extension point, not a quantity column.
+
+> [ENFORCEMENT]: No `quantity` column, no `state` enum on `sample`. The `parent_sample_id FK → samples.id` from [A2](#a-language-and-core-concepts) covers aliquoting lineage. `measurement.sample_id FK → samples.id` from [B4](#b-defining-bound-of-project---experiments---measurement) is the record of sample usage, per [A0](#a-language-and-core-concepts).
+
 
 
 
