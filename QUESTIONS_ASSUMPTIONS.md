@@ -8,6 +8,12 @@ Feel free to give me your thoughts.
 
 ## A. Language and core concepts
 
+A0. Which context this system will be used? A integration data pipeline microservice, web api, cli, or just a single script to import and validate a csv content file?
+
+> [IMPACT]    : Where rules should be living? App layer, database or both?
+
+> [ASSUMPTION]: it is a CSV ingestion workflow for lab exports.
+
 A1. Is "measurement" one concept, or is it hiding several (raw reading vs. interpreted result vs. free-text observation)?
 
 > [IMPACT]    : whether the model is one polymorphic Measurement or split entitie.
@@ -25,12 +31,29 @@ A2. When a sample is "divided into smaller vials," is that aliquoting — i.e., 
 
 B1. When a Project is marked as 'Completed' or 'Cancelled', what happens to its internal Experiments? Is still allowed inside it — adding a new experiment? logging a measurement on an experiment inside a cancelled?
 
+> [IMPACT]    : 
+
+> [ASSUMPTION]: 
+
+
 B2. When an experiment is a 'follow-up' to a previous experiment, what exactly is it inheriting?
 > Does it automatically target the same hypothesis or use the same samples? Is it a strict linear chain (Experiment A ->  B -> C), or can one failed experiment spawn three separate, parallel follow-up experiments?
 
+> [IMPACT]    : 
+
+> [ASSUMPTION]: 
+
 B3. Must an experiment's dates fall within the project's lifecycle? Must `end_date ≥ start_date`?
 
+> [IMPACT]    : 
+
+> [ASSUMPTION]: 
+
 B4. When a measurement "references the sample it was taken from," must that sample be one the experiment actually uses?
+
+> [IMPACT]    : 
+
+> [ASSUMPTION]: 
 
 ## C. Follow-up experiments
 
