@@ -25,7 +25,7 @@ Below is the rationale behind this choice and the trade-offs considered.
 
 - **Full Domain Application Layer Approach** : Build a DDD-style application layer with use cases, repositories, and schema validators before the database is exercised. **Why it was rejected:** The current ambiguity is mostly about domain invariants, not transport or orchestration. Capturing those invariants in the schema and documentation gives faster value and keeps the interview surface smaller.
 
-- **[Chosen] CSV Ingestion Workflow Approach** : Treat the lab's current spreadsheet/export world as the input boundary. CSV rows are parsed and validated before insert, while Postgres remains the source of truth for relationships and durable constraints.
+- **[Chosen] CSV Ingestion Workflow Approach** : Treat the lab's current spreadsheet/export world as the input boundary. CSV rows are parsed and validated before insert, while Postgres remains the source of truth for relationships and durable constraints. See [docs/csv-ingestion.md](./docs/csv-ingestion.md) for the flat-CSV → JSONB transform seam that bridges this decision with the JSONB measurement model in [Decision 1](#1-measurements-the-jsonb-approach).
 
 #### Advantages
 
@@ -71,10 +71,10 @@ Below is the rationale behind this choice and the trade-offs considered.
 
 #### Accepted Trade-offs & Risks : 
 
-- Loss of Strict DB-Level Type Constraint: PostgreSQL cannot natively enforce that a numeric measurement always contains a valid float directly through column definitions.
+- **No type safety from the column definition**: Unlike a typed column, a `JSONB` column does not, on its own, guarantee that a numeric measurement holds a valid number. That guarantee has to be added explicitly.
 
-- Application-Level Responsibility: The burden of structural validation shifts from the database to the application layer. The backend application will be responsible for validating input data against specific schemas (e.g., using Zod/TypeScript or JSON Schema validation) before committing the write.
+- **Validation must live somewhere explicit**: The structural checking that typed columns give for free has to be written by hand. Under [A0](./QUESTIONS_ASSUMPTIONS.md#a-language-and-core-concepts) there is no application layer to host it (no Zod/TypeScript request handler in the path), so it belongs in the database, next to the data the CSV importer writes.
 
 ##### Mitigation Strategies:
 
-we can enforce partial schema constraints using database-level CHECK constraints if strict boundaries are needed for core types, such as ensuring a type field exists in the JSON payload
+Enforce the payload contract with a Postgres `CHECK` on `value` that branches on `measurement_type`: assert the shape and `jsonb_typeof` of the known core types (a numeric reading must be a JSON `number`, a unit a JSON `string`), while staying permissive for not-yet-seen types so adopting a new technique still needs no migration. The CSV importer then relies on the database to reject malformed rows. Promoting a brand-new shape to a validated core type is an additive `CHECK` migration — cheap, no table rewrite. See [A1](./QUESTIONS_ASSUMPTIONS.md#a-language-and-core-concepts) for the full reasoning, and [docs/csv-ingestion.md](./docs/csv-ingestion.md) for the concrete `CHECK` and transform SQL.
