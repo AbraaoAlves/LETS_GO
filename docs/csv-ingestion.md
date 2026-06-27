@@ -19,6 +19,7 @@ CREATE TEMP TABLE staging_measurements (
   measurement_type text,
   numeric_value    text,   -- everything arrives as text from CSV
   unit             text,
+  categorical_value text,
   note             text
 );
 
@@ -29,6 +30,7 @@ SELECT
   measurement_type,
   CASE measurement_type
     WHEN 'numeric' THEN jsonb_build_object('value', numeric_value::numeric, 'unit', unit)
+    WHEN 'categorical' THEN jsonb_build_object('value', categorical_value)
     WHEN 'text'    THEN jsonb_build_object('note',  note)
     ELSE              to_jsonb(note)    -- unknown type: pass the raw payload through
   END
@@ -57,6 +59,7 @@ ALTER TABLE measurements ADD CONSTRAINT measurements_value_shape CHECK (
   CASE measurement_type
     WHEN 'numeric' THEN jsonb_typeof(value->'value') = 'number'
                     AND jsonb_typeof(value->'unit')  = 'string'
+    WHEN 'categorical' THEN jsonb_typeof(value->'value') = 'string'
     WHEN 'text'    THEN jsonb_typeof(value->'note')  = 'string'
     ELSE TRUE   -- unknown type: accept any payload, no migration
   END
