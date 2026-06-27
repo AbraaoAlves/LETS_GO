@@ -14,9 +14,14 @@ An Software Engineer from [BitHippie](https://www.bithippie.com/team) company. T
 
 ## About OpenQuestions & Assumptions
 
-All questions should have impact and assumptions documented below each one of them. Sometimes this assumptions can generate important trade-offs&decisions and should be documented in README section. 
+All questions should have three fields documented below each one of them:
+- `[IMPACT]` — what design decision this forces
+- `[ASSUMPTION]` — the chosen answer and its rationale
+- `[ENFORCEMENT]` — how the database enforces it (per [A0](./QUESTIONS_ASSUMPTIONS.md#a-language-and-core-concepts): always the database, never application code)
 
-All questions has a reference: A0, A1, B2, C2 ... This is important to help navigation between concepts and files betweeen files.
+Sometimes assumptions generate important trade-offs & decisions and should be documented in the README section.
+
+All questions have a reference: A0, A1, B2, C2 … This is important for navigation between concepts and files.
 
 ## About Trade-offs & Decisions
 
