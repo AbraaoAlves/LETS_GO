@@ -75,6 +75,12 @@ C1. Can a follow-up experiment belong to a *different* project than the one it f
 
 C2. Is the follow-up relationship a strict linear chain (A→B→C), or can one experiment spawn several parallel follow-ups? Are cycles ever valid?
 
+> [IMPACT]    : Whether a cycle-detection trigger is needed on top of the self-reference `CHECK` from [B2](#b-defining-bound-of-project---experiments---measurement).
+
+> [ASSUMPTION]: Parallel follow-ups (DAG) are established by [B2](#b-defining-bound-of-project---experiments---measurement) — one experiment can spawn multiple follow-ups, and a strict linear chain is not required. Cycles are semantically invalid but multi-hop cycle detection requires a recursive CTE trigger walking the full predecessor chain — significant write cost for an invariant the problem never asserts. The one-hop case is already blocked by B2's `CHECK (predecessor_experiment_id <> id)`. Multi-hop cycle prevention is deferred. If lineage traversal cost becomes a problem, a `generation` integer column (`generation = predecessor.generation + 1`, capped by a `CHECK`) is the O(1) escape hatch — one column, one constraint, no recursive trigger.
+
+> [ENFORCEMENT]: The `CHECK (predecessor_experiment_id <> id)` from [B2](#b-defining-bound-of-project---experiments---measurement) covers direct self-reference. No recursive cycle-detection trigger, per [A0](#a-language-and-core-concepts).
+
 C3. Is "follow-up" really just an experiment-to-experiment edge, or the shadow of a missing concept (a "study," "line of inquiry," or "research thread")?
 
 
