@@ -49,7 +49,7 @@ erDiagram
   RESEARCHERS {
     bigint id PK
     text name
-    text email
+    text email UK
     researcher_role role
   }
 
@@ -145,9 +145,10 @@ flowchart TB
 - Experiment and sample lineage block direct self-reference. Multi-hop cycle detection is
   deliberately deferred because CSV ingestion is treated as append-only historical import.
 - Declarative constraints carry the rest: `samples.sample_code UNIQUE` (the lab's unique specimen
-  id), `project_researchers PK(project_id, researcher_id)` (collaboration is M:N, deduplicated),
-  enum domains on `researcher.role` and the two `*_status` columns, and `NOT NULL`/FK integrity
-  across every relationship.
+  id), `researchers.email UNIQUE` (stable CSV fixture key), `project_researchers
+  PK(project_id, researcher_id)` (collaboration is M:N, deduplicated), enum domains on
+  `researcher.role` and the two `*_status` columns, and `NOT NULL`/FK integrity across every
+  relationship.
 
 ## Deliberate Non-Goals
 
