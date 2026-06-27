@@ -258,29 +258,6 @@ Below is the rationale behind this choice and the trade-offs considered.
 
 Enforce the payload contract with a Postgres `CHECK` on `value` that branches on `measurement_type`: assert the shape and `jsonb_typeof` of the known core types (a numeric reading must be a JSON `number`, a unit must be a JSON `string`), while staying permissive for not-yet-seen types so adopting a new technique still needs no migration. The CSV importer then relies on the database to reject malformed rows. Promoting a brand-new shape to a validated core type is an additive `CHECK` migration — cheap, no table rewrite. See [A1](./QUESTIONS_ASSUMPTIONS.md#a-language-and-core-concepts) for the full reasoning, and [docs/csv-ingestion.md](./docs/csv-ingestion.md) for the concrete `CHECK` and transform SQL.
 
-### 3. Experiment lineage cycle detection
-
-Based on [C2](./QUESTIONS_ASSUMPTIONS.md#c-follow-up-experiments), the decision is whether to enforce acyclicity in the experiment predecessor graph at the database level, and if so, which mechanism to use.
-
----
-
-- **Recursive CTE trigger**: On every `INSERT` or `UPDATE` to `predecessor_experiment_id`, walk the entire ancestor chain with a recursive CTE and reject if a cycle is detected. Full cycle detection, O(depth) per write, imposing read locks and full-tree traversal. **Why it was rejected:** The normal write path in a CSV ingestion workflow is append-only — retroactive lineage rewiring via `UPDATE` is an operational anomaly, not a routine operation. Paying the recursive traversal cost on every insert to guard against a mutation the workflow never performs is not justified.
-
-- **Generation counter**: A `generation` integer column enforces `generation = predecessor.generation + 1` via a `BEFORE INSERT` trigger with a single predecessor lookup (O(1), not recursive), capped by a `CHECK` constraint. Any row that would create a cycle violates the monotonicity invariant. **Why it was deferred:** Under concurrent inserts targeting the same predecessor, the single-row lookup creates row-level lock contention — a real cost for a guard against UPDATE-based lineage rewiring that the append-only ingestion workflow does not perform.
-
-- **[Chosen] `CHECK`-only deferral**: The `CHECK (predecessor_experiment_id <> id)` from [B2](./QUESTIONS_ASSUMPTIONS.md#b-defining-bound-of-project---experiments---measurement) blocks the one-hop self-reference case. Multi-hop cycle detection is deferred.
-
----
-
-#### Accepted Trade-offs & Risks:
-
-- **Silent multi-hop cycles under `UPDATE`**: An `UPDATE` that rewires `predecessor_experiment_id` retroactively (e.g., changing B's predecessor from A to C when A→C already exists) creates a multi-hop cycle the database will not catch. If the generation counter escape hatch is also active, the lineage becomes inconsistent with corrupted generation values.
-- **Generation counter's own concurrency cost**: If the generation counter is activated, its `BEFORE INSERT` trigger introduces row-level lock contention on the predecessor row under concurrent inserts — a cost that is O(1) but not zero.
-
-##### Mitigation Strategies:
-
-The append-only nature of CSV ingestion over historical lab logs is the load-bearing assumption. If the workflow evolves to allow retroactive lineage edits, activate the generation counter (`BEFORE INSERT` trigger + `CHECK (generation < MAX_DEPTH)`) as the O(1) incremental guard. Reserve the recursive CTE trigger only if generation depth enforcement proves insufficient for the cycle patterns that emerge in practice.
-
 ### 2. Sample usage tracking: FK-only vs. `experiment_samples` join table
 
 Based on [B4](./QUESTIONS_ASSUMPTIONS.md#b-defining-bound-of-project---experiments---measurement), the decision is whether to track which samples an experiment uses as a first-class relationship, or to derive it from the measurements that reference those samples.
@@ -303,3 +280,26 @@ Based on [B4](./QUESTIONS_ASSUMPTIONS.md#b-defining-bound-of-project---experimen
 ##### Mitigation Strategies:
 
 If [D1](./QUESTIONS_ASSUMPTIONS.md#d-the-physical-vs-digital-nature-of-samples) confirms that samples can be consumed without generating measurements, introduce an `experiment_samples` associative table at that point — it is an additive migration, not a redesign. Until then, the FK-only model keeps CSV ingestion simple and avoids a join table the current scope does not justify.
+
+### 3. Experiment lineage cycle detection
+
+Based on [C2](./QUESTIONS_ASSUMPTIONS.md#c-follow-up-experiments), the decision is whether to enforce acyclicity in the experiment predecessor graph at the database level, and if so, which mechanism to use.
+
+---
+
+- **Recursive CTE trigger**: On every `INSERT` or `UPDATE` to `predecessor_experiment_id`, walk the entire ancestor chain with a recursive CTE and reject if a cycle is detected. Full cycle detection, O(depth) per write, imposing read locks and full-tree traversal. **Why it was rejected:** The normal write path in a CSV ingestion workflow is append-only — retroactive lineage rewiring via `UPDATE` is an operational anomaly, not a routine operation. Paying the recursive traversal cost on every insert to guard against a mutation the workflow never performs is not justified.
+
+- **Generation counter**: A `generation` integer column enforces `generation = predecessor.generation + 1` via a `BEFORE INSERT` trigger with a single predecessor lookup (O(1), not recursive), capped by a `CHECK` constraint. Any row that would create a cycle violates the monotonicity invariant. **Why it was deferred:** Under concurrent inserts targeting the same predecessor, the single-row lookup creates row-level lock contention — a real cost for a guard against UPDATE-based lineage rewiring that the append-only ingestion workflow does not perform.
+
+- **[Chosen] `CHECK`-only deferral**: The `CHECK (predecessor_experiment_id <> id)` from [B2](./QUESTIONS_ASSUMPTIONS.md#b-defining-bound-of-project---experiments---measurement) blocks the one-hop self-reference case. Multi-hop cycle detection is deferred.
+
+---
+
+#### Accepted Trade-offs & Risks:
+
+- **Silent multi-hop cycles under `UPDATE`**: An `UPDATE` that rewires `predecessor_experiment_id` retroactively (e.g., changing B's predecessor from A to C when A→C already exists) creates a multi-hop cycle the database will not catch. If the generation counter escape hatch is also active, the lineage becomes inconsistent with corrupted generation values.
+- **Generation counter's own concurrency cost**: If the generation counter is activated, its `BEFORE INSERT` trigger introduces row-level lock contention on the predecessor row under concurrent inserts — a cost that is O(1) but not zero.
+
+##### Mitigation Strategies:
+
+The append-only nature of CSV ingestion over historical lab logs is the load-bearing assumption. If the workflow evolves to allow retroactive lineage edits, activate the generation counter (`BEFORE INSERT` trigger + `CHECK (generation < MAX_DEPTH)`) as the O(1) incremental guard. Reserve the recursive CTE trigger only if generation depth enforcement proves insufficient for the cycle patterns that emerge in practice.
