@@ -62,9 +62,12 @@ ALTER TABLE measurements ADD CONSTRAINT measurements_value_shape CHECK (
     WHEN 'categorical' THEN jsonb_typeof(value->'value') = 'string'
     WHEN 'text'    THEN jsonb_typeof(value->'note')  = 'string'
     ELSE TRUE   -- unknown type: accept any payload, no migration
-  END
+  END IS TRUE
 );
 ```
+
+The final `IS TRUE` matters: PostgreSQL `CHECK` constraints accept `NULL`, so a missing JSON key
+must be forced to `FALSE`, not allowed to drift through as unknown.
 
 ### `ELSE TRUE` keeps new techniques migration-free
 
@@ -84,3 +87,21 @@ This split is the payoff of the whole approach:
 | **Enforce its shape** | one additive `WHEN` branch on the `CHECK` — a cheap migration, no table rewrite | only when a type is common enough to be worth hardening |
 
 So "new types need no migration" holds. You pay a (small, additive) migration only when you *choose* to harden a type — never just to start recording it.
+
+## Fixture key contract
+
+The challenge fixtures do not depend on generated database IDs. They use stable CSV keys and
+TEMP staging tables to resolve relationships:
+
+| CSV | Relationship key |
+| --- | --- |
+| `researchers` | `email` |
+| `projects` | `title` |
+| `project_researchers` | `project_title`, `researcher_email` |
+| `samples` | `sample_code`, optional `parent_sample_code` |
+| `experiments` | `project_title`, `title`, optional predecessor pair |
+| `measurements` | `experiment_project_title`, `experiment_title`, optional `sample_code` |
+
+Required missing references land in `NOT NULL`/FK failures. Optional references treat blank as
+`NULL`; nonblank missing references use an impossible FK value so bad rows are not silently
+filtered away.
