@@ -30,6 +30,9 @@ flowchart LR
   TRIGGERS --> REJECT
 ```
 
+The diagram overlays three flows; their order is fixed — **Flyway provisions the schema first**,
+then `run_pipeline.sh` ingests CSV fixtures and runs assertions against the live schema.
+
 ### Responsibilities
 
 - **Flyway** owns schema history: tables, enums, constraints, checks, and triggers.
@@ -115,15 +118,15 @@ erDiagram
 
 ```mermaid
 flowchart TB
-  ACTIVE[B1: project must be active for descendant writes]
+  WRITABLE[B1: terminal project status freezes descendant writes]
   IMMUTABLE[E1: measurements are immutable after insert]
   SHAPE[A1: known measurement JSONB shapes are checked]
-  LINEAGE[B2/C2: direct self-lineage is blocked]
+  LINEAGE[B2: direct self-lineage blocked; C2 multi-hop deferred]
   SAMPLE[A2: direct sample self-parenting is blocked]
   DATE[B3: experiment end date cannot precede start date]
 
-  ACTIVE --> EXPERIMENTS[experiments insert trigger]
-  ACTIVE --> MEASUREMENTS[measurements insert trigger]
+  WRITABLE --> EXPERIMENTS[experiments insert trigger]
+  WRITABLE --> MEASUREMENTS[measurements insert trigger]
   IMMUTABLE --> MEASUREMENTS_MUTATION[measurements update/delete trigger]
   SHAPE --> MEASUREMENTS_CHECK[measurements value CHECK]
   LINEAGE --> EXPERIMENTS_CHECK[experiments predecessor CHECK]
@@ -133,13 +136,18 @@ flowchart TB
 
 ### Database-Enforced Rules
 
-- Projects in terminal states freeze new experiments and measurements beneath them.
+- Projects in terminal states (`completed`, `cancelled`) freeze new experiments and measurements
+  beneath them; `planning` and `active` projects both accept writes.
 - Measurements cannot be updated or deleted through normal database writes.
 - Known measurement types use a `jsonb_typeof`-based `CHECK` on `measurements.value`.
 - New measurement types can be registered as data first; hardening their JSONB shape is an
   additive migration when the shape becomes stable enough to enforce.
 - Experiment and sample lineage block direct self-reference. Multi-hop cycle detection is
   deliberately deferred because CSV ingestion is treated as append-only historical import.
+- Declarative constraints carry the rest: `samples.sample_code UNIQUE` (the lab's unique specimen
+  id), `project_researchers PK(project_id, researcher_id)` (collaboration is M:N, deduplicated),
+  enum domains on `researcher.role` and the two `*_status` columns, and `NOT NULL`/FK integrity
+  across every relationship.
 
 ## Deliberate Non-Goals
 
