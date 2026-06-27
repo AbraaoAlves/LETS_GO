@@ -4,7 +4,7 @@ This is repos is a challenge/problem (described [here](./PROBLEM.md)) that I nee
 
 
 - OpenQuestions & Assumptions: find the questions [here](./QUESTIONS_ASSUMPTIONS.md), 
-- Trade-offs & Decisions: find the documented trade-off [here](./README.md#accepted-trade-offs--risks-).
+- Decisions & Trade-offs: find the documented trade-off [here](./README.md#accepted-trade-offs--risks-).
 
 
 ## Who will read this project
@@ -23,7 +23,7 @@ Sometimes assumptions generate important trade-offs & decisions and should be do
 
 All questions have a reference: A0, A1, B2, C2 … This is important for navigation between concepts and files.
 
-## About Trade-offs & Decisions
+## About Decisions & Trade-offs 
 
 All new trade-off & decision item should be documented with the same structure than [JSONB value](./README.md#0-runtime-context-csv-ingestion-workflow)
 

@@ -9,7 +9,7 @@ The system is a Laboratory Experiment Tracking System (LETS) to manage laborator
 To start this solutions I made a list questions and assumptions about the problem. You can see here: (QUESTIONs_ASSUMPTIONS.md)[./QUESTIONs_ASSUMPTIONS.md].
 
 
-## Trade-offs & Decisions
+## Decisions & Trade-offs
 
 ### 0. Runtime context: CSV ingestion workflow
 
