@@ -78,3 +78,26 @@ Below is the rationale behind this choice and the trade-offs considered.
 ##### Mitigation Strategies:
 
 Enforce the payload contract with a Postgres `CHECK` on `value` that branches on `measurement_type`: assert the shape and `jsonb_typeof` of the known core types (a numeric reading must be a JSON `number`, a unit a JSON `string`), while staying permissive for not-yet-seen types so adopting a new technique still needs no migration. The CSV importer then relies on the database to reject malformed rows. Promoting a brand-new shape to a validated core type is an additive `CHECK` migration — cheap, no table rewrite. See [A1](./QUESTIONS_ASSUMPTIONS.md#a-language-and-core-concepts) for the full reasoning, and [docs/csv-ingestion.md](./docs/csv-ingestion.md) for the concrete `CHECK` and transform SQL.
+
+### 2. Sample usage tracking: FK-only vs. `experiment_samples` join table
+
+Based on [B4](./QUESTIONS_ASSUMPTIONS.md#b-defining-bound-of-project---experiments---measurement), the decision is whether to track which samples an experiment uses as a first-class relationship, or to derive it from the measurements that reference those samples.
+
+---
+
+- **`experiment_samples` join table approach**: An explicit `(experiment_id, sample_id)` association is recorded before any measurement is taken. Enforcing that `measurement.sample_id` belongs to the experiment becomes a trigger check against this table. **Why it was deferred:** It introduces a new first-class entity the problem statement never mentions, requires maintaining a pre-registration step in the CSV ingestion workflow, and enforcement still needs a cross-table trigger (not a simple `CHECK`) — adding write cost and complexity before a real workflow has proven the need.
+
+- **[Chosen] FK-only approach**: `measurement.sample_id FK → samples.id` (nullable). The measurement row is the record that an experiment used a sample. No join table, no cross-table trigger.
+
+---
+
+#### Accepted Trade-offs & Risks:
+
+- **Zero-measurement samples are invisible**: A sample placed into an experiment but destroyed or consumed before any measurement is collected will not appear in the experiment's audit trail. This is a real GxP traceability gap.
+- **Semantic overloading**: "Sample used" is treated as synonymous with "sample that generated a measurement." Control samples and reagents that are inputs to the experiment but do not produce individual measurement rows are also invisible.
+- **No scope guard**: The FK accepts any valid `samples.id` in the system. A CSV typo that references a sample from an unrelated project passes silently.
+- **Query cost at scale**: Deriving sample usage via `SELECT DISTINCT sample_id FROM measurements WHERE experiment_id = X` becomes a bottleneck on high-frequency telemetry tables.
+
+##### Mitigation Strategies:
+
+If [D1](./QUESTIONS_ASSUMPTIONS.md#d-the-physical-vs-digital-nature-of-samples) confirms that samples can be consumed without generating measurements, introduce an `experiment_samples` associative table at that point — it is an additive migration, not a redesign. Until then, the FK-only model keeps CSV ingestion simple and avoids a join table the current scope does not justify.
