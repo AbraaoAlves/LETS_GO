@@ -49,9 +49,11 @@ B2. When an experiment is a 'follow-up' to a previous experiment, what exactly i
 
 B3. Must an experiment's dates fall within the project's lifecycle? Must `end_date ≥ start_date`?
 
-> [IMPACT]    : 
+> [IMPACT]    : Whether the database needs to enforce date ordering (`end_date ≥ start_date`) and date containment (experiment dates within project bounds), and whether each requires a `CHECK` or a cross-table trigger.
 
-> [ASSUMPTION]: 
+> [ASSUMPTION]: `end_date ≥ start_date` is enforced — it is always true by definition and costs nothing. `end_date` is nullable (experiment still running). Project-date containment is **not** enforced: [B1](#b-defining-bound-of-project---experiments---measurement) already freezes writes once a project is `completed` or `cancelled`, which is the meaningful lifecycle boundary. Labs frequently don't know project end dates upfront, and requiring experiment dates to stay within project bounds would need a cross-table trigger for no additional regulatory value beyond the status gate.
+
+> [ENFORCEMENT]: `CHECK (end_date IS NULL OR end_date >= start_date)` on `experiment`. No cross-table date-containment constraint — project lifecycle is enforced by the status trigger from [B1](#b-defining-bound-of-project---experiments---measurement), not by date comparisons, per [A0](#a-language-and-core-concepts).
 
 B4. When a measurement "references the sample it was taken from," must that sample be one the experiment actually uses?
 
