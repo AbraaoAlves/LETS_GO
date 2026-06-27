@@ -10,6 +10,10 @@ ALTER TABLE measurements
         jsonb_typeof(value->'value') = 'string'
       WHEN 'text' THEN
         jsonb_typeof(value->'note') = 'string'
+      -- Intentional fail-open: a newly registered measurement_type is accepted
+      -- with any payload until a later migration adds its shape branch here.
+      -- This is the A1 extensibility trade-off, exercised by the spectral_scan
+      -- case in run_pipeline.sh. Do not switch to ELSE FALSE.
       ELSE TRUE
     END IS TRUE
   );
