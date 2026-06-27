@@ -25,7 +25,7 @@ Below is the rationale behind this choice and the trade-offs considered.
 
 - **Full Domain Application Layer Approach** : Build a DDD-style application layer with use cases, repositories, and schema validators before the database is exercised. **Why it was rejected:** The current ambiguity is mostly about domain invariants, not transport or orchestration. Capturing those invariants in the schema and documentation gives faster value and keeps the interview surface smaller.
 
-- **[Chosen] CSV Ingestion Workflow Approach** : Treat the lab's current spreadsheet/export world as the input boundary. CSV rows are parsed and validated before insert, while Postgres remains the source of truth for relationships and durable constraints. See [docs/csv-ingestion.md](./docs/csv-ingestion.md) for the flat-CSV → JSONB transform seam that bridges this decision with the JSONB measurement model in [Decision 1](#1-measurements-the-jsonb-approach).
+- **[Chosen] CSV Ingestion Workflow Approach** : Treat the lab's current spreadsheet/export world as the input boundary. CSV rows are parsed and normalized before insert, while Postgres remains the source of truth and final validation guard for relationships and durable constraints. See [docs/csv-ingestion.md](./docs/csv-ingestion.md) for the flat-CSV → JSONB transform seam that bridges this decision with the JSONB measurement model in [Decision 1](#1-measurements-the-jsonb-approach).
 
 #### Advantages
 
@@ -47,7 +47,7 @@ Keep the database strict on durable invariants, document the expected CSV contra
 
 My first design decisions in this system revolves around [how to store `Measurements`](./QUESTIONS_ASSUMPTIONS.md#a-language-and-core-concepts). The requirements state that measurements can take several forms and that **new kinds of measurements are added occasionally** as the lab adopts new techniques.
 
-To solve this flexibility requirement, I chose to implement a **JSONB column (`data`)** within a unified `measurements` table to store the polymorphic payload, rather than relying on strict relational alternatives.
+To solve this flexibility requirement, I chose to implement a **JSONB column (`value`)** within a unified `measurements` table to store the polymorphic payload, rather than relying on strict relational alternatives.
 
 Below is the rationale behind this choice and the trade-offs considered.
 
@@ -73,11 +73,11 @@ Below is the rationale behind this choice and the trade-offs considered.
 
 - **No type safety from the column definition**: Unlike a typed column, a `JSONB` column does not, on its own, guarantee that a numeric measurement holds a valid number. That guarantee has to be added explicitly.
 
-- **Validation must live somewhere explicit**: The structural checking that typed columns give for free has to be written by hand. Under [A0](./QUESTIONS_ASSUMPTIONS.md#a-language-and-core-concepts) there is no application layer to host it (no Zod/TypeScript request handler in the path), so it belongs in the database, next to the data the CSV importer writes.
+- **Known JSONB shapes are still database-enforced**: A `JSONB` column does not infer the expected shape from `measurement_type` by itself, but Postgres can enforce that contract with a `CHECK` using `jsonb_typeof`. Under [A0](./QUESTIONS_ASSUMPTIONS.md#a-language-and-core-concepts), the database is the last guard: a numeric measurement inserted as a JSON string is rejected before it becomes durable data.
 
 ##### Mitigation Strategies:
 
-Enforce the payload contract with a Postgres `CHECK` on `value` that branches on `measurement_type`: assert the shape and `jsonb_typeof` of the known core types (a numeric reading must be a JSON `number`, a unit a JSON `string`), while staying permissive for not-yet-seen types so adopting a new technique still needs no migration. The CSV importer then relies on the database to reject malformed rows. Promoting a brand-new shape to a validated core type is an additive `CHECK` migration — cheap, no table rewrite. See [A1](./QUESTIONS_ASSUMPTIONS.md#a-language-and-core-concepts) for the full reasoning, and [docs/csv-ingestion.md](./docs/csv-ingestion.md) for the concrete `CHECK` and transform SQL.
+Enforce the payload contract with a Postgres `CHECK` on `value` that branches on `measurement_type`: assert the shape and `jsonb_typeof` of the known core types (a numeric reading must be a JSON `number`, a unit must be a JSON `string`), while staying permissive for not-yet-seen types so adopting a new technique still needs no migration. The CSV importer then relies on the database to reject malformed rows. Promoting a brand-new shape to a validated core type is an additive `CHECK` migration — cheap, no table rewrite. See [A1](./QUESTIONS_ASSUMPTIONS.md#a-language-and-core-concepts) for the full reasoning, and [docs/csv-ingestion.md](./docs/csv-ingestion.md) for the concrete `CHECK` and transform SQL.
 
 ### 3. Experiment lineage cycle detection
 
