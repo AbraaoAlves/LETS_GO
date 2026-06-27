@@ -285,7 +285,13 @@ INSERT INTO measurements (
   notes,
   researcher_id
 ) VALUES (
-  (SELECT id FROM experiments WHERE title = 'Alpha Baseline'),
+  (
+    SELECT e.id
+      FROM experiments e
+      JOIN projects p ON p.id = e.project_id
+     WHERE p.title = 'Project Alpha'
+       AND e.title = 'Alpha Baseline'
+  ),
   (SELECT id FROM samples WHERE sample_code = 'S-ALPHA-001'),
   'numeric',
   '{"value": "12.4", "unit": "C"}'::jsonb,
