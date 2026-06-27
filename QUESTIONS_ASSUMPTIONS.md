@@ -33,7 +33,9 @@ B1. When a Project is marked as 'Completed' or 'Cancelled', what happens to its 
 
 > [IMPACT]    : Whether project status gates descendant writes, and whether the database enforces it or application code does.
 
-> [ASSUMPTION]: Both `completed` and `cancelled` freeze all descendant writes — no new experiments, no new measurements. Per [A0](#a-language-and-core-concepts), this is enforced at the database level (trigger or FK-based check), not in application code. The distinction between statuses is semantic only: `completed` signals successful conclusion, `cancelled` signals early termination. Both produce immutable records for audit and regulatory traceability, consistent with biotech governance (GxP/ALCOA+ principles where raw data is never overwritten after finalization).
+> [ASSUMPTION]: Both `completed` and `cancelled` freeze all descendant writes — no new experiments, no new measurements. The distinction between statuses is semantic only: `completed` signals successful conclusion, `cancelled` signals early termination. Both produce immutable records for audit and regulatory traceability, consistent with biotech governance (GxP/ALCOA+ principles where raw data is never overwritten after finalization).
+
+> [ENFORCEMENT]: `status` enum column on `project` (`active | completed | cancelled`). A trigger on `experiments` and `measurements` checks that the root project status is `active` before allowing an insert, per [A0](#a-language-and-core-concepts).
 
 
 B2. When an experiment is a 'follow-up' to a previous experiment, what exactly is it inheriting?
