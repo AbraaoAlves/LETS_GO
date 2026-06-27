@@ -85,9 +85,35 @@ The schema has seven tables: `researchers`, `projects`, `project_researchers`, `
 fixtures resolve relationships through stable keys documented in
 [docs/csv-ingestion.md](./docs/csv-ingestion.md).
 
-## OpenQuestions & Assumptions
+## Open Questions & Assumptions
 
-To start this solutions I made a list questions and assumptions about the problem. You can see here: [QUESTIONS_ASSUMPTIONS.md](./QUESTIONS_ASSUMPTIONS.md).
+Full detail, including impact and database enforcement for each assumption, lives in
+[QUESTIONS_ASSUMPTIONS.md](./QUESTIONS_ASSUMPTIONS.md). The short version:
+
+- **Runtime boundary:** this is a CSV ingestion workflow for lab exports, not a web API or
+  application service. Durable invariants live in Postgres constraints, foreign keys, checks,
+  and triggers.
+- **Measurements:** one `measurements` table stores typed `JSONB` payloads classified by
+  `measurement_type`. Known core shapes are database-checked; new types can be registered as
+  data before their shape is hardened.
+- **Project lifecycle:** `completed` and `cancelled` projects freeze new descendant experiments
+  and measurements; `planning` and `active` remain writable.
+- **Experiment lineage:** follow-ups are traceability links only. They do not copy samples,
+  hypotheses, or status, and cross-project follow-ups are allowed.
+- **Sample usage:** a measurement row is the record that an experiment used a sample. There is no
+  separate `experiment_samples` table until the lab confirms sample usage must be pre-registered
+  or tracked without a measurement.
+
+Questions I would clarify with the lab before building this further:
+
+- Are samples inventory-managed physical resources with quantities, depletion, disposal, or
+  chain-of-custody history?
+- Must an experiment pre-register samples before any measurements are recorded?
+- Are measurement corrections routine enough to require append-only versioning instead of strict
+  update/delete blocking?
+- Do researcher roles drive approvals or access control, or are they only descriptive metadata?
+- What do real machine CSV exports look like, and do they require durable staging plus row-level
+  error reports?
 
 
 ## Decisions & Trade-offs
