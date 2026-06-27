@@ -5,7 +5,7 @@ version: '3.8'
 
 services:
   postgres:
-    image: postgres:15-alpine
+    image: postgres:16-alpine
     container_name: lab_postgres
     environment:
       POSTGRES_DB: lab
@@ -30,7 +30,7 @@ services:
         condition: service_healthy
 
   pipeline_tester:
-    image: postgres:15-alpine
+    image: postgres:16-alpine
     container_name: lab_pipeline_tester
     volumes:
       - .:/app
