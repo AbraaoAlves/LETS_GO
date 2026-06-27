@@ -16,15 +16,15 @@ A0. Which context this system will be used? A integration data pipeline microser
 
 A1. Is "measurement" one concept, or is it hiding several (raw reading vs. interpreted result vs. free-text observation)?
 
-> [IMPACT]    : whether the model is one polymorphic Measurement or split entitie.
+> [IMPACT]    : whether the model is one polymorphic Measurement or split entities — and, given [A0](#a-language-and-core-concepts), where its type rules live. With no application layer, the JSONB payload must be validated by the database itself.
 
-> [ASSUMPTION]: one `measurement` is entity carrying a typed value, classified by a first-class `measurement_type` and a `value JSONB`. Adding a new measurement type  require no schema migration. This keeps the door open for new techniques.
+> [ASSUMPTION]: one `measurement` is a single entity carrying a typed value, classified by a first-class `measurement_type` and a `value JSONB`. New types that reuse an existing payload shape need no migration, keeping the door open for new techniques. To honor [A0](#a-language-and-core-concepts) (invariants live in the database, not an app layer), the JSONB risk noted in [Decision 1](./README.md#1-measurements-the-jsonb-approach) is recovered with a Postgres `CHECK` on `value` that branches on `measurement_type`: it asserts the payload shape and `jsonb_typeof` of the known core types (a numeric reading must be a JSON `number`, a unit must be a JSON `string`) while staying permissive for not-yet-seen types. The CSV importer then relies on the database to reject malformed rows. Promoting a brand-new shape to a validated core type is an additive `CHECK` migration — cheap, no table rewrite — not a table redesign.
 
 A2. When a sample is "divided into smaller vials," is that aliquoting — i.e., do you need parent→child sample lineage?
 
-> [IMPACT]    : whether Sample needs a self-referencing genealogy and whether quantity is tracked
+> [IMPACT]    : whether Sample needs a self-referencing genealogy and whether quantity is tracked — and, under [A0](#a-language-and-core-concepts), whether lineage integrity is enforced by the database rather than by import code.
 
-> [ASSUMPTION]: support an optional `parent_sample_id` self-reference so lineage is representable.
+> [ASSUMPTION]: support an optional `parent_sample_id` self-reference so lineage is representable. Per [A0](#a-language-and-core-concepts), its invariants live in the database: a self-referencing foreign key keeps every parent valid, and a `CHECK (parent_sample_id <> id)` blocks a sample from being its own parent. Deeper-tree rules (cycle prevention, generation limits) and quantity tracking are deferred until a real workflow needs them.
 
 
 ## B. Defining bound of Project <-> Experiments <-> Measurement:
