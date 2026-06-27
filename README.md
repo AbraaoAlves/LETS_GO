@@ -4,9 +4,14 @@
 
 The system is a Laboratory Experiment Tracking System (LETS) to manage laboratory governance and operations. Created to solve this challange ([PROBLEM.md](./PROBLEM.md)) 
 
+## Architecture
+
+See [ARCHITECTURE.md](./ARCHITECTURE.md) for the runtime map, domain graph, and database
+invariant map used to guide implementation.
+
 ## OpenQuestions & Assumptions
 
-To start this solutions I made a list questions and assumptions about the problem. You can see here: (QUESTIONs_ASSUMPTIONS.md)[./QUESTIONs_ASSUMPTIONS.md].
+To start this solutions I made a list questions and assumptions about the problem. You can see here: [QUESTIONS_ASSUMPTIONS.md](./QUESTIONS_ASSUMPTIONS.md).
 
 
 ## Decisions & Trade-offs

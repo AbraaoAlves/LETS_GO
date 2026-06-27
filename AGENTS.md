@@ -5,6 +5,7 @@ This is repos is a challenge/problem (described [here](./PROBLEM.md)) that I nee
 
 - OpenQuestions & Assumptions: find the questions [here](./QUESTIONS_ASSUMPTIONS.md), 
 - Decisions & Trade-offs: find the documented trade-off [here](./README.md#accepted-trade-offs--risks-).
+- Architecture: use [ARCHITECTURE.md](./ARCHITECTURE.md) as the source-readable system map before implementation.
 
 
 ## Who will read this project
@@ -30,7 +31,6 @@ All new trade-off & decision item should be documented with the same structure t
 ## Invariant: Never contradict A0
 
 [A0](./QUESTIONS_ASSUMPTIONS.md#a-language-and-core-concepts) establishes that this system has **no application layer** — it is a CSV ingestion workflow. Every assumption, trade-off, and enforcement decision must be consistent with this: domain invariants live in the database (constraints, triggers, check constraints), not in application code (Zod, TypeScript, service classes). If a proposed assumption would require an app layer to enforce, reject it or reframe it as a database-level rule.
-
 
 
 
