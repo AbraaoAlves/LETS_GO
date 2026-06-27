@@ -31,9 +31,9 @@ A2. When a sample is "divided into smaller vials," is that aliquoting — i.e., 
 
 B1. When a Project is marked as 'Completed' or 'Cancelled', what happens to its internal Experiments? Is still allowed inside it — adding a new experiment? logging a measurement on an experiment inside a cancelled?
 
-> [IMPACT]    : 
+> [IMPACT]    : Whether project status gates descendant writes, and whether the database enforces it or application code does.
 
-> [ASSUMPTION]: 
+> [ASSUMPTION]: Both `completed` and `cancelled` freeze all descendant writes — no new experiments, no new measurements. Per [A0](#a-language-and-core-concepts), this is enforced at the database level (trigger or FK-based check), not in application code. The distinction between statuses is semantic only: `completed` signals successful conclusion, `cancelled` signals early termination. Both produce immutable records for audit and regulatory traceability, consistent with biotech governance (GxP/ALCOA+ principles where raw data is never overwritten after finalization).
 
 
 B2. When an experiment is a 'follow-up' to a previous experiment, what exactly is it inheriting?

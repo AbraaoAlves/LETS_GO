@@ -22,6 +22,10 @@ All questions has a reference: A0, A1, B2, C2 ... This is important to help navi
 
 All new trade-off & decision item should be documented with the same structure than [JSONB value](./README.md#0-runtime-context-csv-ingestion-workflow)
 
+## Invariant: Never contradict A0
+
+[A0](./QUESTIONS_ASSUMPTIONS.md#a-language-and-core-concepts) establishes that this system has **no application layer** — it is a CSV ingestion workflow. Every assumption, trade-off, and enforcement decision must be consistent with this: domain invariants live in the database (constraints, triggers, check constraints), not in application code (Zod, TypeScript, service classes). If a proposed assumption would require an app layer to enforce, reject it or reframe it as a database-level rule.
+
 
 
 
