@@ -39,9 +39,11 @@ B1. When a Project is marked as 'Completed' or 'Cancelled', what happens to its 
 B2. When an experiment is a 'follow-up' to a previous experiment, what exactly is it inheriting?
 > Does it automatically target the same hypothesis or use the same samples? Is it a strict linear chain (Experiment A ->  B -> C), or can one failed experiment spawn three separate, parallel follow-up experiments?
 
-> [IMPACT]    : 
+> [IMPACT]    : Whether `experiment` needs a self-referencing lineage edge and whether the shape is a linear chain or a DAG (one predecessor → many follow-ups).
 
-> [ASSUMPTION]: 
+> [ASSUMPTION]: A follow-up experiment inherits nothing automatically — the researcher manually sets up the new experiment, reusing the same samples or hypothesis at their discretion. "Follow-up" is a lineage pointer for traceability, not a content-copy mechanism. One experiment can spawn multiple parallel follow-ups (DAG, not a strict chain). A cancelled or completed experiment can be a valid predecessor — follow-ups on failed runs are a legitimate biotech workflow. Cycle prevention is deferred (YAGNI).
+
+> [ENFORCEMENT]: Optional `predecessor_experiment_id FK → experiments.id` (NULL = original experiment). `CHECK (predecessor_experiment_id <> id)` blocks self-reference, per [A0](#a-language-and-core-concepts). No constraint on predecessor status — pointing to a `cancelled` experiment is allowed.
 
 B3. Must an experiment's dates fall within the project's lifecycle? Must `end_date ≥ start_date`?
 
