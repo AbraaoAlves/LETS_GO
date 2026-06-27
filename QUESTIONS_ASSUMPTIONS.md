@@ -115,7 +115,13 @@ E1. Once a measurement is recorded, can it ever be edited or deleted, or is it a
 
 > [ENFORCEMENT]: A trigger on `measurement` that raises an exception on any `UPDATE` or `DELETE`, per [A0](#a-language-and-core-concepts). No `deleted_at` column, no `superseded_by FK`, no audit log table. The immutability of the project record ([B1](#b-defining-bound-of-project---experiments---measurement)) and the immutability of its measurement rows (E1) are the same invariant expressed at two levels.
 
-E2. Does a measurement always require a sample, or can it be an observation of the experiment as a whole? 
+E2. Does a measurement always require a sample, or can it be an observation of the experiment as a whole?
+
+> [IMPACT]    : Whether `measurement.sample_id` is nullable or required — and whether experiment-level observations (environmental readings, equipment calibrations, whole-run outcomes) need a separate entity or fit in the unified `measurement` table.
+
+> [ASSUMPTION]: A measurement does not always require a sample. Experiment-level observations — ambient temperature during a run, equipment calibration baselines, whole-experiment outcome notes — are legitimate measurement rows with no sample reference. A second entity (`experiment_observation`) would duplicate the type/value/experiment structure already in `measurement` for no modelling gain. This is already pre-decided: [B4](#b-defining-bound-of-project---experiments---measurement) declared `sample_id` nullable precisely for this case. E2 names the semantic justification — `sample_id IS NULL` means "this measurement describes the experiment context, not a specific sample."
+
+> [ENFORCEMENT]: The nullable `sample_id FK → samples.id` from [B4](#b-defining-bound-of-project---experiments---measurement) is the complete model. No additional constraint. No separate entity, per [A0](#a-language-and-core-concepts).
 
 
 ## F. About Roles
