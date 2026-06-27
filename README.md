@@ -11,7 +11,7 @@ invariant map used to guide implementation.
 
 ## Quick Start
 
-Run the full database demo with one command:
+### Start the stack and explore (watch mode)
 
 ```sh
 docker compose up
@@ -19,10 +19,22 @@ docker compose up
 
 Flyway applies the Postgres migrations, then `run_pipeline.sh` loads seed data, imports valid
 CSV fixtures, and proves the invalid fixtures are rejected by database constraints/triggers.
-Postgres remains running on `localhost:5432`.
+Postgres stays up afterward so you can connect and run queries. Stop and clean up with
+`docker compose down -v`.
+
+### Run the pipeline once as a test (no watch)
+
+```sh
+docker compose run --rm pipeline_tester; docker compose down -v
+```
+
+Same migrations and pipeline, but it runs once and tears everything down on exit. Test results
+print directly to the terminal without container-log prefixes — handy for a quick pass/fail check.
+
+### Port override
 
 If local port `5432` is busy, keep the same internal database wiring and publish a different host
-port:
+port by prefixing either command:
 
 ```sh
 POSTGRES_PORT=55432 docker compose up
