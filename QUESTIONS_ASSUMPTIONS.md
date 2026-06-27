@@ -128,4 +128,14 @@ E2. Does a measurement always require a sample, or can it be an observation of t
 
 F1. Are these roles purely for identity and access management (e.g., who can log into the system), or do they dictate critical domain business logic? For example, does an experiment lifecycle require a Principal Investigator to sign off on a Graduate Student’s hypothesis before it can move from "planning" to "active"?
 
-> The "Role" of Researcher: The document notes that the lab tracks names, contact details, and roles (principal investigators, lab technicians, graduate students), but not say if that info will be used for something else. 
+> The "Role" of Researcher: The document notes that the lab tracks names, contact details, and roles (principal investigators, lab technicians, graduate students), but not say if that info will be used for something else.
+
+> [IMPACT]    : Whether `researcher.role` drives workflow gates, database access policies, or is purely a descriptive attribute — and whether the schema links researchers to the scientific records they produce.
+
+> [ASSUMPTION]: `role` is researcher metadata, not an IAM control or workflow gate. Under [A0](#a-language-and-core-concepts), there is no authenticated session, no approval queue, and no state machine — nothing to attach role-based access or sign-off logic to. The problem statement lists principal investigator, lab technician, and graduate student as attributes of the people the lab tracks; it never names an approval workflow or permission boundary. `role` is implemented as a Postgres enum (`principal_investigator | lab_technician | graduate_student`); adding a new role (postdoc, lab manager) requires `ALTER TYPE ... ADD VALUE` — additive, no table rewrite, the same category of cost as promoting a new measurement type in [A1](#a-language-and-core-concepts).
+
+> [ENFORCEMENT]: A `role` enum on the `researcher` table. `experiment` and `measurement` carry a `researcher_id FK → researchers.id` — the researcher who ran the experiment or recorded the measurement — which is what makes role queryable against scientific records ("find all measurements recorded by a PI"). No row-level security policies, no sign-off trigger, no state machine, per [A0](#a-language-and-core-concepts).
+
+> [RISKS]:
+> - **Attribution gap (ALCOA+)**: The database cannot validate personnel compliance violations originating from the CSV — if a row records a graduate student completing a project that lab regulations require a PI to sign off on, the import succeeds silently. Under [A0](#a-language-and-core-concepts), governance validation belongs at the data source or pre-processing pipeline, not in the database core.
+> - **Enum migration cost**: Adding a new role requires `ALTER TYPE ... ADD VALUE`. If the team structure is highly dynamic, the natural extension path is a `roles` lookup table.
