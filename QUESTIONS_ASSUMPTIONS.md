@@ -109,6 +109,12 @@ D1. Are these samples physical resources that get consumed, altered, or depleted
 
 E1. Once a measurement is recorded, can it ever be edited or deleted, or is it an immutable historical record?
 
+> [IMPACT]    : Whether `measurement` allows corrections (`UPDATE`), removals (`DELETE`), soft-delete (`deleted_at`), versioning (`superseded_by FK`), or an audit log — and whether researcher-level corrections are a first-class workflow.
+
+> [ASSUMPTION]: Measurements are immutable historical records once ingested. The problem statement frames this as a historical lab log import ([A0](#a-language-and-core-concepts)) — the CSV import is the authoritative write event, and the measurement row is the permanent record of what was observed. This closes the same logic as [B1](#b-defining-bound-of-project---experiments---measurement): ALCOA+ principles (raw data is never overwritten after finalization) apply to individual measurement rows, not just to the project lifecycle. [B1](#b-defining-bound-of-project---experiments---measurement)'s trigger blocks new inserts on non-active projects but does not prevent `UPDATE` or `DELETE` on rows that already exist — E1 fills that gap. If a row was imported with a wrong value, that is a DBA-level correction, not a routine researcher workflow; it does not belong in the schema.
+
+> [ENFORCEMENT]: A trigger on `measurement` that raises an exception on any `UPDATE` or `DELETE`, per [A0](#a-language-and-core-concepts). No `deleted_at` column, no `superseded_by FK`, no audit log table. The immutability of the project record ([B1](#b-defining-bound-of-project---experiments---measurement)) and the immutability of its measurement rows (E1) are the same invariant expressed at two levels.
+
 E2. Does a measurement always require a sample, or can it be an observation of the experiment as a whole? 
 
 
