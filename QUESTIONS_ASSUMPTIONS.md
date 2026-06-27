@@ -57,9 +57,11 @@ B3. Must an experiment's dates fall within the project's lifecycle? Must `end_da
 
 B4. When a measurement "references the sample it was taken from," must that sample be one the experiment actually uses?
 
-> [IMPACT]    : 
+> [IMPACT]    : Whether `measurement.sample_id` must be constrained to samples formally registered to the experiment — implying an `experiment_samples` join table and a cross-table trigger — or whether a plain FK to `samples` is sufficient.
 
-> [ASSUMPTION]: 
+> [ASSUMPTION]: A plain FK is sufficient for this MVP. The measurement row is the record that an experiment used a sample — no prior registration step is needed. However, this model carries a known semantic assumption: **"sample used" is synonymous with "sample that generated a measurement."** This breaks in three real scenarios: (1) a sample is consumed or destroyed before any measurement is collected — it simply disappears from the experiment's audit trail; (2) control samples or reagents are inputs to the experiment but never produce an individual measurement row; (3) a typo in a CSV row can silently associate a sample from an unrelated project, since the FK accepts any valid `samples.id` with no scope guard. Additionally, `SELECT DISTINCT sample_id FROM measurements WHERE experiment_id = X` becomes a read bottleneck on high-frequency telemetry tables. If [D1](#d-the-physical-vs-digital-nature-of-samples) confirms that samples can be consumed without generating measurements, an `experiment_samples` associative table becomes necessary — that is the extension path. `sample_id` is nullable — see [E2](#e-the-semantics-of-measurements) for the case where a measurement has no sample at all.
+
+> [ENFORCEMENT]: `sample_id FK → samples.id` (nullable) on `measurement`. No `experiment_samples` join table and no cross-table containment trigger, per [A0](#a-language-and-core-concepts). See [Decision 2](./README.md#2-sample-usage-tracking-fk-only-vs-experiment_samples-join-table) for the accepted trade-offs.
 
 ## C. Follow-up experiments
 
