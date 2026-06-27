@@ -48,6 +48,38 @@ Below is the rationale behind this choice and the trade-offs considered.
 
 Keep the database strict on durable invariants, document the expected CSV contract near the ingestion script when it exists, and add a small staging/error-report table only if bad production files become a real workflow problem.
 
+### 0.1. CSV shape: simplified contract over raw lab exports
+
+Real laboratory machines often produce noisy, denormalized flat CSV files: one row can mix project, experiment, sample, researcher, and measurement columns, and bad rows may contain malformed values or inconsistent names. I am aware that a production-grade lab importer would need a broader ETL/staging workflow for that raw shape.
+
+For this challenge, I intentionally use a simpler CSV contract that is close to the target database model. The goal is to prove the relational design and database invariants, not to build a general-purpose CSV cleaning product.
+
+Below is the rationale behind this choice and the trade-offs considered.
+
+---
+
+- **Raw Machine Export ETL Approach** : Accept the exact denormalized files emitted by lab equipment and split them into the target tables during ingestion, including header mapping, row quarantine, deduplication, idempotency, and malformed-line recovery. **Why it was deferred:** Those are real production concerns, but they require real source files and operational error-handling requirements. Building that now would bury the database model under importer behavior that the challenge does not ask for.
+
+- **SQL Seed-Only Approach** : Skip CSV ingestion entirely and prove the schema only with hand-written `INSERT` statements. **Why it was rejected:** It would make the Docker demo smaller, but it would not exercise the CSV boundary established in [A0](./QUESTIONS_ASSUMPTIONS.md#a-language-and-core-concepts).
+
+- **[Chosen] Simplified Contract CSV Approach** : Use explicit, predictable CSV fixtures that already follow the domain vocabulary and can be loaded through temporary staging tables plus SQL transforms. Postgres remains the source of truth and final validation guard through foreign keys, unique constraints, checks, and triggers.
+
+#### Advantages
+
+- **Honest Challenge Scope**: Keeps attention on the schema, invariants, Docker startup, and seed/demo data requested by the problem.
+- **Executable Without Importer Sprawl**: A reviewer can run the pipeline and inspect the database without reading a custom ETL framework first.
+- **Still Compatible With A0**: CSV remains the input boundary, while durable rules stay enforced by the database rather than an absent application layer.
+
+#### Accepted Trade-offs & Risks :
+
+- **Not a Production Raw-Export Importer**: The solution does not claim to handle arbitrary machine exports, malformed delimiters, duplicate names, or row-level quarantine.
+- **Upstream Normalization Assumed**: The CSV contract assumes stable identifiers or already-separated entity rows before data reaches the database ingestion step.
+- **Simpler Error Feedback**: Failed rows surface as Postgres cast, FK, unique, check, or trigger errors, not as polished per-row business messages.
+
+##### Mitigation Strategies:
+
+Treat the simplified CSV shape as a documented contract for this challenge. If real raw lab exports become part of the requirement, add a small durable staging/error-report layer or a separate pre-processing step that converts raw files into this contract before `COPY`. Do not relax the database constraints; they remain the final guard under [A0](./QUESTIONS_ASSUMPTIONS.md#a-language-and-core-concepts).
+
 ### 1. Measurements: The JSONB approach
 
 My first design decisions in this system revolves around [how to store `Measurements`](./QUESTIONS_ASSUMPTIONS.md#a-language-and-core-concepts). The requirements state that measurements can take several forms and that **new kinds of measurements are added occasionally** as the lab adopts new techniques.
