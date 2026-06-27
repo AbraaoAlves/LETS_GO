@@ -1,0 +1,2 @@
+experiment_project_title,experiment_title,sample_code,measurement_type,numeric_value,unit,categorical_value,note,recorded_at,notes,researcher_email
+Project Alpha,Alpha Baseline,S-ALPHA-001,numeric,12.4,,,,2024-01-12T13:30:00Z,missing unit,ben@example.org

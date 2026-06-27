@@ -1,0 +1,2 @@
+project_title,title,hypothesis,status,start_date,end_date,predecessor_project_title,predecessor_experiment_title,lead_researcher_email
+Project Alpha,Bad Date Experiment,End cannot precede start,active,2024-03-10,2024-03-01,,,alice@example.org

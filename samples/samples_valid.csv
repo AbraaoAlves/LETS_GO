@@ -1,0 +1,3 @@
+sample_code,sample_type,collected_at,storage_location,parent_sample_code
+S-GAMMA-001,tissue,2024-03-01T09:00:00Z,Freezer G1,
+S-ALPHA-002-A,blood aliquot,2024-01-11T09:00:00Z,Freezer A3,S-ALPHA-001
