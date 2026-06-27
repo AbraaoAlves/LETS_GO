@@ -342,6 +342,16 @@ BEGIN
   ) THEN
     RAISE EXCEPTION 'expected experiment-level measurement without sample';
   END IF;
+
+  IF NOT EXISTS (
+    SELECT 1
+    FROM measurements
+    WHERE sample_id IS NOT NULL
+    GROUP BY sample_id
+    HAVING count(DISTINCT experiment_id) > 1
+  ) THEN
+    RAISE EXCEPTION 'expected a sample used across multiple experiments';
+  END IF;
 END $$;
 SQL
 }

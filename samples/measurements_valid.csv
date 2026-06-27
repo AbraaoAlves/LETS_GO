@@ -1,5 +1,6 @@
 experiment_project_title,experiment_title,sample_code,measurement_type,numeric_value,unit,categorical_value,note,recorded_at,notes,researcher_email
 Project Alpha,Alpha Baseline,S-ALPHA-001,numeric,37.5,C,,,2024-01-12T13:00:00Z,temperature reading,ben@example.org
 Project Alpha,Alpha Follow-up,S-ALPHA-001-A,categorical,,,pass,,2024-01-15T14:00:00Z,follow-up outcome,carla@example.org
+Project Alpha,Alpha Follow-up,S-ALPHA-001,numeric,4.4,mg/L,,,2024-01-15T14:30:00Z,reused baseline sample,carla@example.org
 Project Gamma,Gamma Planning Run,,text,,,,whole-run observation,2024-03-05T15:00:00Z,experiment-level note,carla@example.org
 Project Delta,Delta Stability Test,S-GAMMA-001,spectral_scan,,,,raw-spectrum-v1,2024-03-06T16:00:00Z,new registered type,dana@example.org
