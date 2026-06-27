@@ -43,7 +43,7 @@ B2. When an experiment is a 'follow-up' to a previous experiment, what exactly i
 
 > [IMPACT]    : Whether `experiment` needs a self-referencing lineage edge and whether the shape is a linear chain or a DAG (one predecessor → many follow-ups).
 
-> [ASSUMPTION]: A follow-up experiment inherits nothing automatically — the researcher manually sets up the new experiment, reusing the same samples or hypothesis at their discretion. "Follow-up" is a lineage pointer for traceability, not a content-copy mechanism. One experiment can spawn multiple parallel follow-ups (DAG, not a strict chain). A cancelled or completed experiment can be a valid predecessor — follow-ups on failed runs are a legitimate biotech workflow. Cycle prevention is deferred (YAGNI).
+> [ASSUMPTION]: A follow-up experiment inherits nothing automatically — the researcher manually sets up the new experiment, reusing the same samples or hypothesis at their discretion. "Follow-up" is a lineage pointer for traceability, not a content-copy mechanism. One experiment can spawn multiple parallel follow-ups (DAG, not a strict chain). A cancelled or completed experiment can be a valid predecessor — follow-ups on failed runs are a legitimate biotech workflow. Multi-hop cycle detection is addressed in [C2](#c-follow-up-experiments).
 
 > [ENFORCEMENT]: Optional `predecessor_experiment_id FK → experiments.id` (NULL = original experiment). `CHECK (predecessor_experiment_id <> id)` blocks self-reference, per [A0](#a-language-and-core-concepts). No constraint on predecessor status — pointing to a `cancelled` experiment is allowed.
 
@@ -82,6 +82,12 @@ C2. Is the follow-up relationship a strict linear chain (A→B→C), or can one 
 > [ENFORCEMENT]: The `CHECK (predecessor_experiment_id <> id)` from [B2](#b-defining-bound-of-project---experiments---measurement) covers direct self-reference. No recursive cycle-detection trigger, per [A0](#a-language-and-core-concepts).
 
 C3. Is "follow-up" really just an experiment-to-experiment edge, or the shadow of a missing concept (a "study," "line of inquiry," or "research thread")?
+
+> [IMPACT]    : Whether a first-class `study` / `research_thread` entity is needed between `project` and `experiment` to group experiments sharing a scientific question even when they share no direct lineage edge.
+
+> [ASSUMPTION]: "Follow-up" is just a lineage edge — no missing concept. `project` is the administrative grouping; `predecessor_experiment_id` is the scientific lineage pointer. A "study" entity would require its own table, a new FK on `experiment`, and lifecycle rules — none of which the problem statement names or implies. The DAG built from `predecessor_experiment_id` already lets a researcher navigate to all ancestors and descendants of any experiment. If thematic grouping across unrelated lineage chains ever matters, `project` is the natural placeholder until a real workflow proves the need for a finer-grained grouping entity.
+
+> [ENFORCEMENT]: No new table. The `predecessor_experiment_id FK → experiments.id` from [B2](#b-defining-bound-of-project---experiments---measurement) is the complete model.
 
 
 ## D. The Physical vs. Digital Nature of "Samples"
