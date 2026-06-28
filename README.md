@@ -84,6 +84,16 @@ The schema has seven tables: `researchers`, `projects`, `project_researchers`, `
 fixtures resolve relationships through stable keys documented in
 [docs/csv-ingestion.md](./docs/csv-ingestion.md).
 
+## Security, Governance & Operations
+
+The security model is database-resident integrity plus write-once governance, with local-only
+runtime defaults. RLS, least-privilege roles, and audit logging are intentionally deferred until
+there is a query-time multi-principal workflow or shared deployment target.
+
+See [docs/security-governance.md](./docs/security-governance.md) for the current controls, the RLS
+non-choice, and the hardening roadmap. See [Decision 0.3](#03-security-governance-database-integrity-now-access-controls-later)
+for the trade-off.
+
 ## Open Questions & Assumptions
 
 Full detail, including impact and database enforcement for each assumption, lives in
@@ -220,6 +230,57 @@ while `tests/run_pipeline.sh` owns seed loading, CSV imports, and acceptance ass
 
 Keep the harness small and assertion-driven. Promote it to a real importer/test runner only when
 real CSV error reporting becomes part of the product requirement.
+
+### 0.3. Security governance: database integrity now, access controls later
+
+Based on [A0](./QUESTIONS_ASSUMPTIONS.md#a-language-and-core-concepts), this system has no
+application layer and no authenticated query-time users. Its current security and governance model is
+therefore database-resident integrity, write-once measurement governance, and local-only Docker
+defaults — not RLS policies or a role matrix.
+
+The detailed security notes live in [docs/security-governance.md](./docs/security-governance.md).
+
+---
+
+- **Full access-control model now** : Add RLS policies, read/write roles, grants, audit tables,
+  secret management, and TLS as if this were already a shared production service. **Why it was
+  rejected:** The challenge asks for a Docker-runnable Postgres data model and seed data, not a
+  deployed multi-user application. Without multiple principals, RLS policies would only evaluate
+  against the same ingestion role.
+
+- **No security discussion** : Treat this as pure schema work and avoid operational/security
+  boundaries. **Why it was rejected:** The model makes governance claims through immutability,
+  attribution, and finalization freezes. Those claims should be explicit, including what is not yet
+  protected.
+
+- **[Chosen] Integrity-first governance approach** : Enforce durable invariants in Postgres through
+  FKs, `NOT NULL`, `UNIQUE`, enum types, `CHECK`s, and triggers. Keep Docker local by default, mount
+  fixtures read-only, document the gaps, and defer access controls until real users query the
+  database.
+
+#### Advantages
+
+- **Matches Current Runtime**: A single CSV ingestion principal does not need row-level visibility
+  rules.
+- **Keeps Guarantees Durable**: Future importers, CLIs, or APIs inherit the same database
+  constraints.
+- **Avoids Security Theater**: RLS is reserved for the moment it actually protects distinct users or
+  tenants.
+
+#### Accepted Trade-offs & Risks :
+
+- **No Least-Privilege Ingestion Role Yet**: The local harness uses the `postgres` role, so it is not
+  a shared-deployment permission model.
+- **No Audit Trail For DBA Corrections**: Measurement rows are immutable through normal writes, but
+  rare superuser fixes are not captured in an append-only audit table.
+- **No Query-Time Isolation**: Per-researcher or per-lab visibility is not enforced because there is
+  no query-time application serving those principals.
+
+##### Mitigation Strategies:
+
+Keep the default stack bound to localhost and the schema strict. Add a separate ingestion role,
+audit log, RLS, secrets, and TLS only when the database leaves the local challenge/demo environment
+or starts serving distinct users.
 
 ### 1. Measurements: The JSONB approach
 

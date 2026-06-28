@@ -175,6 +175,10 @@ Realized executably in `tests/cases/02_valid_csv.sh`, `tests/cases/03_invalid_cs
   measurement row.
 - No inventory management, depletion tracking, or sample state machine.
 - No recursive lineage trigger until retroactive lineage editing becomes a real workflow.
+- No RLS, roles, or grants: a single ingestion principal, so row-level policies would only evaluate
+  against one superuser. Deferred until a query-time consumer with per-row access exists. The
+  security model is database-resident integrity plus E1/B1 immutability; see
+  [docs/security-governance.md](./docs/security-governance.md).
 
 The build is realized in `migrations/` (Flyway schema), `seeds/seed.sql`, and `tests/`
 (ingestion + assertions); see the [README Quick Start](./README.md#quick-start) (`make up` / `make test`) to run it.
