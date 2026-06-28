@@ -184,7 +184,7 @@ Treat the simplified CSV shape as a documented contract for this challenge. If r
 ### 0.2. Tooling: Flyway schema + Bash CSV pipeline
 
 The implementation splits schema history from executable ingestion tests: Flyway owns migrations,
-while `run_pipeline.sh` owns seed loading, CSV imports, and acceptance assertions.
+while `tests/run_pipeline.sh` owns seed loading, CSV imports, and acceptance assertions.
 
 ---
 
@@ -199,7 +199,7 @@ while `run_pipeline.sh` owns seed loading, CSV imports, and acceptance assertion
 - **Plain Postgres init scripts** : Rely on `/docker-entrypoint-initdb.d`. **Why it was rejected:**
   It only runs on a fresh volume and is not explicit versioned migration history.
 
-- **[Chosen] Flyway + `run_pipeline.sh`** : Flyway applies versioned DDL. The pipeline imports
+- **[Chosen] Flyway + `tests/run_pipeline.sh`** : Flyway applies versioned DDL. The pipeline imports
   CSV fixtures through TEMP tables and lets Postgres accept or reject each case.
 
 #### Advantages

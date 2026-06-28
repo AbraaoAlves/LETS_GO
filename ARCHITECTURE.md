@@ -17,7 +17,7 @@ flowchart LR
   TRANSFORM --> DB[(Postgres)]
 
   FLYWAY[Flyway migrations] --> DB
-  PIPELINE[run_pipeline.sh] --> CSV
+  PIPELINE[tests/run_pipeline.sh] --> CSV
   PIPELINE --> TEMP
   PIPELINE --> ASSERTS[Acceptance assertions]
   ASSERTS --> DB
@@ -31,12 +31,12 @@ flowchart LR
 ```
 
 The diagram overlays three flows; their order is fixed — **Flyway provisions the schema first**,
-then `run_pipeline.sh` ingests CSV fixtures and runs assertions against the live schema.
+then `tests/run_pipeline.sh` ingests CSV fixtures and runs assertions against the live schema.
 
 ### Responsibilities
 
 - **Flyway** owns schema history: tables, enums, constraints, checks, and triggers.
-- **`run_pipeline.sh`** owns the executable proof: load seed data, ingest valid CSV files, reject
+- **`tests/run_pipeline.sh`** owns the executable proof: load seed data, ingest valid CSV files, reject
   invalid CSV files, and assert the interesting invariants.
 - **Temporary staging tables** are per-ingestion SQL buffers, not a durable staging subsystem.
 - **Postgres** is the final guard. There is no Zod, TypeScript service layer, repository layer,
