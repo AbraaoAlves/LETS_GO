@@ -31,7 +31,7 @@ services:
       - .:/app:ro
     environment:
       DB_URL: postgresql://postgres:postgres@postgres:5432/lab
-    command: ["bash", "./run_pipeline.sh"]
+    command: ["bash", "tests/run_pipeline.sh"]
     depends_on:
       postgres:
         condition: service_healthy
