@@ -14,18 +14,17 @@ invariant map used to guide implementation.
 ### Start the stack and explore (watch mode)
 
 ```sh
-docker compose up
+make up
 ```
 
-Flyway applies the Postgres migrations, then `run_pipeline.sh` loads seed data, imports valid
-CSV fixtures, and proves the invalid fixtures are rejected by database constraints/triggers.
-Postgres stays up afterward so you can connect and run queries. Stop and clean up with
-`docker compose down -v`.
+Flyway applies the Postgres migrations, then the pipeline loads seed data, imports valid CSV
+fixtures, and proves the invalid fixtures are rejected by database constraints/triggers. Postgres
+stays up afterward so you can connect and run queries. Stop and clean up with `make down`.
 
 ### Run the pipeline once as a test (no watch)
 
 ```sh
-docker compose run --rm pipeline_tester; docker compose down -v
+make test
 ```
 
 Same migrations and pipeline, but it runs once and tears everything down on exit. Test results
@@ -33,17 +32,17 @@ print directly to the terminal without container-log prefixes — handy for a qu
 
 ### Port override
 
-If local port `5432` is busy, keep the same internal database wiring and publish a different host
-port by prefixing either command:
+If local port `5432` is busy, pass `POSTGRES_PORT` to any target:
 
 ```sh
-POSTGRES_PORT=55432 docker compose up
+make up POSTGRES_PORT=55432
+make test POSTGRES_PORT=55432
 ```
 
-Connect with:
+### Connect to the running database
 
 ```sh
-docker compose exec postgres psql -U postgres -d lab
+make psql
 ```
 
 Useful demo queries:
