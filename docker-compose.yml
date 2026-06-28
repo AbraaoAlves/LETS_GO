@@ -1,6 +1,6 @@
 services:
   postgres:
-    image: postgres:15-alpine
+    image: postgres:15.13-alpine
     environment:
       POSTGRES_DB: lab
       POSTGRES_USER: postgres
@@ -14,9 +14,12 @@ services:
       interval: 4s
       timeout: 4s
       retries: 5
+      # Postgres' first boot runs a throwaway init server; start_period keeps
+      # those early flaps from burning the retry budget.
+      start_period: 5s
 
   flyway:
-    image: flyway/flyway:10
+    image: flyway/flyway:10.22.0
     command: -url=jdbc:postgresql://postgres:5432/lab -user=postgres -password=postgres -connectRetries=60 -locations=filesystem:/flyway/sql migrate
     volumes:
       - ./migrations:/flyway/sql:ro
@@ -25,7 +28,9 @@ services:
         condition: service_healthy
 
   pipeline_tester:
-    image: postgres:15
+    # Debian (not -alpine): the bash test harness needs bash, which the
+    # alpine postgres image does not ship. Same 15.13 patch as the server.
+    image: postgres:15.13
     working_dir: /app
     volumes:
       - .:/app:ro
