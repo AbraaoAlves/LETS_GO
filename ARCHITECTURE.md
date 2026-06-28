@@ -150,6 +150,23 @@ flowchart TB
   `researcher.role` and the two `*_status` columns, and `NOT NULL`/FK integrity across every
   relationship.
 
+## Ingestion Test Matrix
+
+`tests/run_pipeline.sh` proves each invariant lives in the database: every valid fixture must be
+accepted, every invalid fixture must be rejected by a specific constraint, check, or trigger.
+
+| Entity CSV | Valid (accept) | Invalid (reject) | DB invariant |
+| --- | --- | --- | --- |
+| `researchers` | role in `researcher_role` enum | unknown role; NULL name | F1 enum; `NOT NULL` |
+| `projects` | status in `project_status` enum | bad status; NULL title | B1 enum; `NOT NULL` |
+| `project_researchers` | existing `project_title` + `researcher_email` | nonexistent researcher; duplicate pair | FK; `PK(project_id, researcher_id)` (M:N) |
+| `samples` | unique `sample_code`; valid `parent_sample_code` | duplicate `sample_code`; nonexistent parent | `UNIQUE`; FK; A2 `CHECK parent <> id` |
+| `experiments` | `planning`/`active` project; `end >= start`; cross-project predecessor | `end < start`; nonexistent project; write into terminal project; self-predecessor | B3 `CHECK`; B2 `CHECK`; FK; B1 freeze trigger |
+| `measurements` | numeric/categorical/text; NULL sample; registered new type | bad JSONB shape; `numeric_value = "12.x"`; nonexistent experiment; write under frozen project | A1 shape `CHECK`; `::numeric` cast gate; FK; B1 freeze; E1 immutability |
+
+Realized executably in `tests/cases/02_valid_csv.sh`, `tests/cases/03_invalid_csv.sh`, and the
+`samples/*.csv` fixtures.
+
 ## Deliberate Non-Goals
 
 - No web API, authentication, service classes, DTOs, or application-layer validation.
@@ -159,4 +176,5 @@ flowchart TB
 - No inventory management, depletion tracking, or sample state machine.
 - No recursive lineage trigger until retroactive lineage editing becomes a real workflow.
 
-For the step-by-step build order, see [implementation_plan.md](./implementation_plan.md).
+The build is realized in `migrations/` (Flyway schema), `seeds/seed.sql`, and `tests/`
+(ingestion + assertions); see the [README Quick Start](./README.md#quick-start) (`make up` / `make test`) to run it.
